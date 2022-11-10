@@ -25,12 +25,6 @@ local function topologicallyUpdate(rootDependents: any)
 	end
 end
 
-local function recompute(d)
-	local dependents = cellDependents[d.cell]
-	cellDependents[d.cell] = setmetatable({}, { __mode = "v" })
-	topologicallyUpdate(dependents)
-end
-
 local function metaIndex(self, key)
 	if key == "value" then
 		local d = getfenv(0)[FENV_KEY]
@@ -57,7 +51,7 @@ local function metaNewIndex(self, key, value)
 		elseif fenv.seen then
 			error("Cannot set cell value from within a cell computation", 2)
 		elseif fenv.batch then
-			fenv.batch[self] = { cell = self, dependents = {}, recompute = recompute }
+			fenv.batch[self] = { cell = self, dependents = cellDependents[self] }
 		end
 	else
 		error(string.format('Cannot set key %q in a cell, only valid field is "value"', key), 2)

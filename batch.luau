@@ -18,7 +18,9 @@ local function topologicallyUpdate(rootDependents: any)
 	end
 	for i = #stack, 1, -1 do
 		local d = stack[i]
-		d:recompute()
+		if d.recompute then
+			d:recompute()
+		end
 	end
 end
 

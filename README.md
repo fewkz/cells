@@ -62,7 +62,7 @@ trigger updates at the end of the batch.
 local c1 = cell("foo")
 local c2 = cell("bar")
 local f = formula(function()
-    return cell1.value .. cell2.value
+    return c1.value .. c2.value
 end)
 -- The formula will only be recomputed at the end of the batch block
 batch(function()

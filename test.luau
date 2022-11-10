@@ -144,6 +144,25 @@ test("Batches can be nested", function()
 	assert(timesRan == 2, "Formula should have only ran twice")
 end)
 
+test("Batch affecting multiple dependencies of a cell will only update it once", function()
+	local c1 = cell("foo")
+	local c2 = cell("bar")
+	local timesRan = 0
+	local f = formula(function()
+		timesRan += 1
+		return c1.value .. c2.value
+	end)
+	assert(f.value == "foobar", "Formula should have been evaluated")
+	assert(timesRan == 1, "Formula should have run once, but ran " .. timesRan .. " times")
+	-- The formula will only be recomputed at the end of the batch block
+	batch(function()
+		c1.value = "first"
+		c2.value = "second"
+	end)
+	assert(f.value == "firstsecond", "Formula should have been re-evaluated")
+	assert(timesRan == 2, "Formula should have only ran twice, but ran " .. timesRan .. " times")
+end)
+
 local red = "\27[31m"
 local green = "\27[32m"
 local bold = "\27[1m"
