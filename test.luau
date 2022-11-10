@@ -163,6 +163,28 @@ test("Batch affecting multiple dependencies of a cell will only update it once",
 	assert(timesRan == 2, "Formula should have only ran twice, but ran " .. timesRan .. " times")
 end)
 
+test("Unused derived cells should be garbage collected", function()
+	local c = cell(1)
+	local t = setmetatable({}, { __mode = "v" })
+	t[1] = formula(function()
+		return c.value
+	end)
+	assert(t[1].value == 1, "Formula should have been evaluated")
+	collectgarbage()
+	assert(t[1] == nil, "Formula should have been garbage collected")
+end)
+
+test("Dependencies shouldn't be garbaged collected unexpectedly", function()
+	local c = cell(1)
+	local f = formula(function()
+		return c.value
+	end)
+	assert(f.value == 1, "Formula should have been evaluated")
+	collectgarbage()
+	c.value = 2
+	assert(f.value == 2, "Formula should have been re-evaluated")
+end)
+
 local red = "\27[31m"
 local green = "\27[32m"
 local bold = "\27[1m"

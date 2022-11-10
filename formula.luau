@@ -4,11 +4,13 @@ local cellDependents = setmetatable({}, { __mode = "k" })
 local FENV_KEY = "74709086-5669-43dc-a7d1-195d71ae0464"
 
 local function callFormulaBody(cell, body, recompute)
-	local dependents = setmetatable({}, { __mode = "v" })
+	local dependents = setmetatable({}, { __mode = "k" })
 	cellDependents[cell] = dependents
 	getfenv(0)[FENV_KEY] = {
 		body = body,
-		cell = cell,
+		-- We use a weak table here so that the cell can be garbage collected.
+		-- Otherwise, this dependency would keep the cell alive.
+		cell = setmetatable({ inner = cell }, { __mode = "v" }),
 		seen = {},
 		recompute = recompute,
 		dependents = dependents,
@@ -22,7 +24,7 @@ local function recompute(d)
 	for _, unsubscribe in d.unsubscribes do
 		unsubscribe()
 	end
-	callFormulaBody(d.cell, d.body, recompute)
+	callFormulaBody(d.cell.inner, d.body, recompute)
 end
 
 local function metaIndex(self, key)
@@ -30,7 +32,7 @@ local function metaIndex(self, key)
 		local d = getfenv(0)[FENV_KEY]
 		if d and not d.seen[self] then
 			d.seen[self] = true
-			table.insert(cellDependents[self], d)
+			cellDependents[self][d.cell.inner] = d
 		end
 		return cellValue[self]
 	else
