@@ -199,6 +199,52 @@ test("Setting a cell to the value value shouldn't trigger a re-evaluation", func
 	assert(timesRan == 1, "Formula should have only ran once, but ran " .. timesRan .. " times")
 end)
 
+test("Unreferenced cells get garbaged collected", function()
+	local t = setmetatable({ cell(1) }, { __mode = "v" })
+	assert(t[1], "Cell should exist")
+	collectgarbage()
+	assert(t[1] == nil, "Cell should have been garbage collected")
+end)
+
+test("Cells should be garbage collected when all dependent cells are garbage collected", function()
+	local c = cell(1)
+	local f1 = formula(function()
+		return c.value
+	end)
+	local f2 = formula(function()
+		return c.value
+	end)
+	local t = setmetatable({ c, f1, f2 }, { __mode = "v" })
+	assert(t[1], "Root cell should exist")
+	assert(t[2], "First derived cell should exist")
+	assert(t[3], "Second derived cell should exist")
+	f1 = nil
+	collectgarbage()
+	assert(t[1], "Root cell should exist")
+	assert(t[2] == nil, "First derived cell should have been garbage collected")
+	assert(t[3], "Second derived cell should exist")
+	f2 = nil
+	collectgarbage()
+	assert(t[1], "Cell should exist")
+	assert(t[3] == nil, "Second derived cell should have been garbage collected")
+	c = nil
+	collectgarbage()
+	assert(t[1] == nil, "Root cell should have been garbage collected")
+end)
+
+test("Cells shouldn't be garbage collected when they're still depended on", function()
+	local c1 = cell(1)
+	local c2 = cell(1)
+	local f = formula(function()
+		return c1.value + c2.value
+	end)
+	local t = setmetatable({ c1 }, { __mode = "v" })
+	assert(t[1], "First cell should exist")
+	c1 = nil
+	collectgarbage()
+	assert(t[1], "First cell shouldn't have been garbage collected")
+end)
+
 local red = "\27[31m"
 local green = "\27[32m"
 local bold = "\27[1m"
