@@ -42,16 +42,21 @@ end
 
 local function metaNewIndex(self, key, value)
 	if key == "value" then
-		cellValue[self] = value
 		local fenv = getfenv(0)[FENV_KEY]
 		if fenv == nil then
-			local dependents = cellDependents[self]
-			cellDependents[self] = setmetatable({}, { __mode = "k" })
-			topologicallyUpdate(dependents)
+			if cellValue[self] ~= value then
+				cellValue[self] = value
+				local dependents = cellDependents[self]
+				cellDependents[self] = setmetatable({}, { __mode = "k" })
+				topologicallyUpdate(dependents)
+			end
+		elseif fenv.batch then
+			if cellValue[self] ~= value then
+				cellValue[self] = value
+				fenv.batch[self] = { cell = { inner = self }, dependents = cellDependents[self] }
+			end
 		elseif fenv.seen then
 			error("Cannot set cell value from within a cell computation", 2)
-		elseif fenv.batch then
-			fenv.batch[self] = { cell = { inner = self }, dependents = cellDependents[self] }
 		end
 	else
 		error(string.format('Cannot set key %q in a cell, only valid field is "value"', key), 2)

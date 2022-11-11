@@ -185,6 +185,20 @@ test("Dependencies shouldn't be garbaged collected unexpectedly", function()
 	assert(f.value == 2, "Formula should have been re-evaluated")
 end)
 
+test("Setting a cell to the value value shouldn't trigger a re-evaluation", function()
+	local c = cell(1)
+	local timesRan = 0
+	local f = formula(function()
+		timesRan += 1
+		return c.value
+	end)
+	assert(f.value == 1, "Formula should have been evaluated")
+	assert(timesRan == 1, "Formula should have run once, but ran " .. timesRan .. " times")
+	c.value = 1
+	assert(f.value == 1, "Formula should not have been re-evaluated")
+	assert(timesRan == 1, "Formula should have only ran once, but ran " .. timesRan .. " times")
+end)
+
 local red = "\27[31m"
 local green = "\27[32m"
 local bold = "\27[1m"
