@@ -29,6 +29,7 @@ local function metaIndex(self, key)
 	if key == "value" then
 		local d = getfenv(0)[FENV_KEY]
 		if d and not d.seen[self] then
+			d.seen[self] = true
 			cellDependents[self][d.cell.inner] = d
 			table.insert(d.unsubscribes, function()
 				cellDependents[self][d.cell.inner] = nil
