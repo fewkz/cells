@@ -4,10 +4,10 @@ local function topologicallyUpdate(rootDependents: any)
 	local visited = {}
 	local stack = {}
 	local function visit(d)
-		if visited[d.cell.inner] then
+		if visited[d] then
 			return
 		end
-		visited[d.cell.inner] = true
+		visited[d] = true
 		for _, d in d.dependents do
 			visit(d)
 		end
