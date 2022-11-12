@@ -1,6 +1,7 @@
 local cell = require("cell")
 local formula = require("formula")
 local batch = require("batch")
+local subscribe = require("subscribe")
 
 local passedTests = {}
 local failedTests = {}
@@ -185,7 +186,7 @@ test("Dependencies shouldn't be garbaged collected unexpectedly", function()
 	assert(f.value == 2, "Formula should have been re-evaluated")
 end)
 
-test("Setting a cell to the value value shouldn't trigger a re-evaluation", function()
+test("Setting a cell to the same value shouldn't trigger a re-evaluation", function()
 	local c = cell(1)
 	local timesRan = 0
 	local f = formula(function()
@@ -243,6 +244,47 @@ test("Cells shouldn't be garbage collected when they're still depended on", func
 	c1 = nil
 	collectgarbage()
 	assert(t[1], "First cell shouldn't have been garbage collected")
+end)
+
+test("subscribe() lets you subscribe to when cells change", function()
+	local c = cell(1)
+	local timesRan = 0
+	local last = nil
+	subscribe(function()
+		timesRan += 1
+		last = c.value
+	end)
+	assert(timesRan == 1, "Subscription should have run once, but ran " .. timesRan .. " times")
+	assert(last == 1, "Subscription should have been called with the initial value")
+	c.value = 2
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	assert(last == 2, "Subscription should have been called with the new value")
+
+	-- This test only really makes sense if the test above passes
+	test("Subscriptions don't get garbage collected unexpectedly", function()
+		collectgarbage() -- Make sure that subscriptions don't get garbage collected
+		c.value = 3
+		assert(timesRan == 3, "Subscription should have been called again")
+	end)
+end)
+
+test("Subscriptions can be unsubscribed", function()
+	local c = cell(1)
+	local timesRan = 0
+	local last = nil
+	local unsub = subscribe(function()
+		timesRan += 1
+		last = c.value
+	end)
+	assert(timesRan == 1, "Subscription should have run once, but ran " .. timesRan .. " times")
+	assert(last == 1, "Subscription should have been called with the initial value")
+	c.value = 2
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	assert(last == 2, "Subscription should have been called with the new value")
+	unsub()
+	c.value = 3
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	assert(last == 2, "Subscription should have been called with the new value")
 end)
 
 local red = "\27[31m"
