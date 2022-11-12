@@ -85,6 +85,44 @@ test("Derived cells dependencies can change", function()
 	switchCell.value = true
 	assert(f.value == "foxes - 3", "Formula should have been re-evaluated")
 	assert(timesRan == 3, "Formula should have only ran thrice, but ran " .. timesRan .. " times")
+	c2.value = 5
+	assert(f.value == "foxes - 3", "Formula should not have been re-evaluated")
+	assert(timesRan == 3, "Formula should have only ran thrice, but ran " .. timesRan .. " times")
+end)
+
+test("Derived dervied cells dependencies can change", function()
+	local switchCell = cell(false)
+	local c1 = cell(1)
+	local c2 = cell(2)
+	local f1 = formula(function()
+		return c1.value .. "!"
+	end)
+	local f2 = formula(function()
+		return c2.value .. "!"
+	end)
+	local timesRan = 0
+	local f = formula(function()
+		timesRan += 1
+		if switchCell.value then
+			return "foxes - " .. f1.value
+		else
+			return "kitties - " .. f2.value
+		end
+	end)
+	assert(f.value == "kitties - 2!", "Formula should have been evaluated")
+	assert(timesRan == 1, "Formula should have run once, but ran " .. timesRan .. " times")
+	c1.value = 3
+	assert(f.value == "kitties - 2!", "Formula should not have been re-evaluated")
+	assert(timesRan == 1, "Formula should have only ran once, but ran " .. timesRan .. " times")
+	c2.value = 4
+	assert(f.value == "kitties - 4!", "Formula should have been re-evaluated")
+	assert(timesRan == 2, "Formula should have only ran twice, but ran " .. timesRan .. " times")
+	switchCell.value = true
+	assert(f.value == "foxes - 3!", "Formula should have been re-evaluated")
+	assert(timesRan == 3, "Formula should have only ran thrice, but ran " .. timesRan .. " times")
+	c2.value = 5
+	assert(f.value == "foxes - 3!", "Formula should not have been re-evaluated")
+	assert(timesRan == 3, "Formula should have only ran thrice, but ran " .. timesRan .. " times")
 end)
 
 test("Updates to derived cells are topologically sorted", function()

@@ -33,6 +33,9 @@ local function metaIndex(self, key)
 		if d and not d.seen[self] then
 			d.seen[self] = true
 			cellDependents[self][d.cell.inner] = d
+			table.insert(d.unsubscribes, function()
+				cellDependents[self][d.cell.inner] = nil
+			end)
 		end
 		return cellValue[self]
 	else
