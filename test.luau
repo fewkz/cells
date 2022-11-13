@@ -325,6 +325,23 @@ test("Subscriptions can be unsubscribed", function()
 	assert(last == 2, "Subscription should have been called with the new value")
 end)
 
+test("Loose cells should get garbage collected (formula that depends on two cells)", function()
+	local c1 = cell(1)
+	local c2 = cell(2)
+	local f1 = formula(function()
+		return c1.value + c2.value
+	end)
+	local t = setmetatable({ c1, c2, f1 }, { __mode = "v" })
+	c1, c2, f1 = nil
+	-- For some reason it takes two garbage collection cycles to collect the cells
+	-- Better than nothing.
+	collectgarbage()
+	collectgarbage()
+	assert(t[1] == nil, "First cell should have been garbage collected")
+	assert(t[2] == nil, "Second cell should have been garbage collected")
+	assert(t[3] == nil, "First formula should have been garbage collected")
+end)
+
 local red = "\27[31m"
 local green = "\27[32m"
 local bold = "\27[1m"
