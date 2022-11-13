@@ -271,18 +271,17 @@ test("Cells should be garbage collected when all dependent cells are garbage col
 	assert(t[1] == nil, "Root cell should have been garbage collected")
 end)
 
-test("Cells shouldn't be garbage collected when they're still depended on", function()
-	local c1 = cell(1)
+test("Cells shouldn't be garbage collected while a formula relies on them", function()
 	local c2 = cell(1)
-	local f = formula(function()
-		return c1.value + c2.value
-	end)
-	local t = setmetatable({ c1 }, { __mode = "v" })
-	assert(t[1], "First cell should exist")
-	local c1 = nil
+	local f
+	do
+		local c1 = cell(1)
+		f = formula(function()
+			return c1.value + c2.value
+		end)
+	end
 	collectgarbage()
 	c2.value = 2 -- make sure this doesn't error
-	assert(t[1], "First cell shouldn't have been garbage collected")
 end)
 
 test("subscribe() lets you subscribe to when cells change", function()
