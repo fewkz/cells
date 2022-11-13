@@ -8,12 +8,12 @@ local function topologicallyUpdate(rootDependents: any)
 			return
 		end
 		visited[d] = true
-		for _, d in d.dependents do
+		for d in d.dependents do
 			visit(d)
 		end
 		table.insert(stack, d)
 	end
-	for _, d in rootDependents do
+	for d in rootDependents do
 		visit(d)
 	end
 	for i = #stack, 1, -1 do

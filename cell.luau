@@ -1,6 +1,3 @@
-local cellValue = setmetatable({}, { __mode = "k" })
-local cellDependents = setmetatable({}, { __mode = "k" })
-
 local FENV_KEY = "74709086-5669-43dc-a7d1-195d71ae0464"
 
 local function topologicallyUpdate(rootDependents: any)
@@ -11,12 +8,12 @@ local function topologicallyUpdate(rootDependents: any)
 			return
 		end
 		visited[d] = true
-		for _, d in d.dependents do
+		for d in d.dependents do
 			visit(d)
 		end
 		table.insert(stack, d)
 	end
-	for _, d in rootDependents do
+	for d in rootDependents do
 		visit(d)
 	end
 	for i = #stack, 1, -1 do
@@ -27,15 +24,16 @@ end
 
 local function metaIndex(self, key)
 	if key == "value" then
+		local ourData = getmetatable(self)._cellData
 		local d = getfenv(0)[FENV_KEY]
 		if d and not d.seen[self] then
 			d.seen[self] = true
-			cellDependents[self][d.cell.inner] = d
+			ourData.dependents[d] = true
 			table.insert(d.unsubscribes, function()
-				cellDependents[self][d.cell.inner] = nil
+				ourData.dependents[d] = nil
 			end)
 		end
-		return cellValue[self]
+		return ourData.value
 	else
 		error(string.format('Cannot get key %q from a cell, only valid field is "value"', key), 2)
 	end
@@ -43,18 +41,19 @@ end
 
 local function metaNewIndex(self, key, value)
 	if key == "value" then
+		local ourData = getmetatable(self)._cellData
 		local fenv = getfenv(0)[FENV_KEY]
 		if fenv == nil then
-			if cellValue[self] ~= value then
-				cellValue[self] = value
-				local dependents = cellDependents[self]
-				cellDependents[self] = setmetatable({}, { __mode = "k" })
+			if ourData.value ~= value then
+				ourData.value = value
+				local dependents = ourData.dependents
+				ourData.dependents = setmetatable({}, { __mode = "k" })
 				topologicallyUpdate(dependents)
 			end
 		elseif fenv.batch then
-			if cellValue[self] ~= value then
-				cellValue[self] = value
-				fenv.batch[self] = { cell = { inner = self }, dependents = cellDependents[self] }
+			if ourData.value ~= value then
+				ourData.value = value
+				fenv.batch[ourData] = true
 			end
 		elseif fenv.seen then
 			error("Cannot set cell value from within a cell computation", 2)
@@ -65,7 +64,8 @@ local function metaNewIndex(self, key, value)
 end
 
 local function metaToString(self)
-	return tostring(cellValue[self])
+	local ourData = getmetatable(self)._cellData
+	return tostring(ourData.value)
 end
 
 local function cell<T>(initial: T): { value: T }
@@ -74,8 +74,14 @@ local function cell<T>(initial: T): { value: T }
 	mt.__index = metaIndex
 	mt.__newindex = metaNewIndex
 	mt.__tostring = metaToString
-	cellValue[cell] = initial
-	cellDependents[cell] = setmetatable({}, { __mode = "k" })
+	local cellData = {
+		cell = cell,
+		seen = {},
+		unsubscribes = {},
+		dependents = setmetatable({}, { __mode = "k" }),
+		value = initial,
+	}
+	mt._cellData = cellData
 	return cell
 end
 

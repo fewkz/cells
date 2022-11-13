@@ -279,8 +279,9 @@ test("Cells shouldn't be garbage collected when they're still depended on", func
 	end)
 	local t = setmetatable({ c1 }, { __mode = "v" })
 	assert(t[1], "First cell should exist")
-	c1 = nil
+	local c1 = nil
 	collectgarbage()
+	c2.value = 2 -- make sure this doesn't error
 	assert(t[1], "First cell shouldn't have been garbage collected")
 end)
 
@@ -302,44 +303,8 @@ test("subscribe() lets you subscribe to when cells change", function()
 	test("Subscriptions don't get garbage collected unexpectedly", function()
 		collectgarbage() -- Make sure that subscriptions don't get garbage collected
 		c.value = 3
-		assert(timesRan == 3, "Subscription should have been called again")
+		assert(timesRan == 3, "Subscription should have only ran thrice, but ran " .. timesRan .. " times")
 	end)
-end)
-
-test("Subscriptions can be unsubscribed", function()
-	local c = cell(1)
-	local timesRan = 0
-	local last = nil
-	local unsub = subscribe(function()
-		timesRan += 1
-		last = c.value
-	end)
-	assert(timesRan == 1, "Subscription should have run once, but ran " .. timesRan .. " times")
-	assert(last == 1, "Subscription should have been called with the initial value")
-	c.value = 2
-	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
-	assert(last == 2, "Subscription should have been called with the new value")
-	unsub()
-	c.value = 3
-	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
-	assert(last == 2, "Subscription should have been called with the new value")
-end)
-
-test("Loose cells should get garbage collected (formula that depends on two cells)", function()
-	local c1 = cell(1)
-	local c2 = cell(2)
-	local f1 = formula(function()
-		return c1.value + c2.value
-	end)
-	local t = setmetatable({ c1, c2, f1 }, { __mode = "v" })
-	c1, c2, f1 = nil
-	-- For some reason it takes two garbage collection cycles to collect the cells
-	-- Better than nothing.
-	collectgarbage()
-	collectgarbage()
-	assert(t[1] == nil, "First cell should have been garbage collected")
-	assert(t[2] == nil, "Second cell should have been garbage collected")
-	assert(t[3] == nil, "First formula should have been garbage collected")
 end)
 
 local red = "\27[31m"
