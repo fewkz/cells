@@ -119,3 +119,27 @@ unsub()
 foo.value = 20
 -- Nothing is printed
 ```
+
+## Dynamic dependencies
+
+Every time a subscription or formula is re-evaluated, it's dependencies are
+re-evaluated. This means the dependencies of a subscription or formula can
+change over time, eliminating redundant evaluations.
+
+```lua
+local ignoreCounter = cell(false)
+local counter = cell(0)
+subscribe(function()
+    if not ignoreCounter.value then
+        print(`Counter is {first.value}`)
+    else
+        print(`Ignoring the counter`)
+    end
+end)
+                            -- prints "Counter is 0"
+counter.value += 1          -- prints "Counter is 1"
+ignoreCounter.value = true  -- prints "Ignoring the counter"
+counter.value += 1          -- doesn't print anything
+ignoreCounter.value = false -- prints "Counter is 2"
+counter.value += 1          -- prints "Counter is 3"
+```
