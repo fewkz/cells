@@ -98,8 +98,9 @@ c.value = {"foo", "bar"}
 The `subscribe` function can be used to subscribe to when cells change. The
 callback will be called immediately, and any cells it depends on will become
 dependencies that will run the callback whenever they're changed. Subscribing
-returns an function that can be used to unsubscribe from all cells. Note:
-subscriptions can cause a memory leak if they are not unsubscribed from.
+returns an function that can be used to unsubscribe from all cells.
+Subscriptions will automatically be garbage collected when all the cells they
+depend on are garbage collected.
 
 ```lua
 local foo = cell(2)

@@ -24,10 +24,13 @@ end
 
 local function metaIndex(self, key)
 	if key == "value" then
-		local ourData = getmetatable(self)._cellData
+		local ourData = getmetatable(self)._data
 		local d = getfenv(0)[FENV_KEY]
 		if d and not d.seen[self] then
 			d.seen[self] = true
+			if d.roots then
+				d.roots[ourData] = true
+			end
 			ourData.dependents[d] = true
 			table.insert(d.unsubscribes, function()
 				ourData.dependents[d] = nil
@@ -41,7 +44,7 @@ end
 
 local function metaNewIndex(self, key, value)
 	if key == "value" then
-		local ourData = getmetatable(self)._cellData
+		local ourData = getmetatable(self)._data
 		local fenv = getfenv(0)[FENV_KEY]
 		if fenv == nil then
 			if ourData.value ~= value then
@@ -64,7 +67,7 @@ local function metaNewIndex(self, key, value)
 end
 
 local function metaToString(self)
-	local ourData = getmetatable(self)._cellData
+	local ourData = getmetatable(self)._data
 	return tostring(ourData.value)
 end
 
@@ -74,14 +77,15 @@ local function cell<T>(initial: T): { value: T }
 	mt.__index = metaIndex
 	mt.__newindex = metaNewIndex
 	mt.__tostring = metaToString
-	local cellData = {
-		cell = cell,
+	local data = {
+		proxy = cell, -- Store a reference to the proxy so it doesn't get garbage collected.
 		seen = {},
 		unsubscribes = {},
 		dependents = setmetatable({}, { __mode = "k" }),
 		value = initial,
+		subscriptions = {},
 	}
-	mt._cellData = cellData
+	mt._data = data
 	return cell
 end
 

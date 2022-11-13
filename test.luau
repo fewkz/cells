@@ -307,6 +307,130 @@ test("subscribe() lets you subscribe to when cells change", function()
 	end)
 end)
 
+test("Loose cells should get garbage collected (formula that depends on two cells)", function()
+	local c1 = cell(1)
+	local c2 = cell(2)
+	local f1 = formula(function()
+		return c1.value + c2.value
+	end)
+	local t = setmetatable({ c1, c2, f1 }, { __mode = "v" })
+	c1, c2, f1 = nil
+	collectgarbage()
+	assert(t[1] == nil, "First cell should have been garbage collected")
+	assert(t[2] == nil, "Second cell should have been garbage collected")
+	assert(t[3] == nil, "First formula should have been garbage collected")
+end)
+
+test("Subscriptions can be unsubscribed", function()
+	local c = cell(1)
+	local timesRan = 0
+	local last = nil
+	local unsub = subscribe(function()
+		timesRan += 1
+		last = c.value
+	end)
+	assert(timesRan == 1, "Subscription should have run once, but ran " .. timesRan .. " times")
+	assert(last == 1, "Subscription should have been called with the initial value")
+	c.value = 2
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	assert(last == 2, "Subscription should have been called with the new value")
+	unsub()
+	c.value = 3
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	assert(last == 2, "Subscription should have been called with the new value")
+end)
+
+test("Subscriptions are garbage collected when all it's dependencies are garbage collected", function()
+	local c1 = cell(1)
+	local c2 = cell(2)
+	do
+		local f1 = formula(function()
+			return c1.value + c2.value
+		end)
+		subscribe(function()
+			return c1.value + c2.value + f1.value
+		end)
+	end
+	local t = setmetatable({ c1, c2 }, { __mode = "v" })
+	c1 = nil
+	collectgarbage()
+	assert(t[1], "First cell should exist")
+	assert(t[2], "Second cell should exist")
+	c2.value = 2
+	c2 = nil
+	collectgarbage()
+	assert(t[1] == nil, "First cell should have been garbage collected")
+	assert(t[2] == nil, "Second cell should have been garbage collected")
+end)
+
+test("Root cells should keep subscriptions alive", function()
+	local c1 = cell(1)
+	local timesRan = 0
+	do
+		local c1 = c1 -- Capture c1
+		local f1 = formula(function()
+			return c1.value * 2
+		end)
+		subscribe(function()
+			timesRan += 1
+			return f1.value
+		end)
+	end
+	local t = setmetatable({ c1 }, { __mode = "v" })
+	assert(timesRan == 1, "Subscription should have only ran once, but ran " .. timesRan .. " times")
+	collectgarbage()
+	c1.value = 2
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	c1 = nil
+	collectgarbage()
+	for i, v in t do
+		print(i, v)
+		for i, v in getmetatable(v)._data do
+			print("", i, v)
+			if typeof(v) == "table" then
+				for i, v in v do
+					print("", "", i, v)
+				end
+			end
+		end
+	end
+	assert(t[1] == nil, "First cell should have been garbage collected")
+end)
+
+test("Subscriptions dependencies can change", function()
+	local switchCell = cell(false)
+	local c1 = cell(1)
+	local c2 = cell(2)
+	local timesRan = 0
+	local value
+	local unsub = subscribe(function()
+		timesRan += 1
+		if switchCell.value then
+			value = "foxes - " .. c1.value
+		else
+			value = "kitties - " .. c2.value
+		end
+	end)
+	assert(value == "kitties - 2", "Subscription should have been evaluated")
+	assert(timesRan == 1, "Subscription should have run once, but ran " .. timesRan .. " times")
+	c1.value = 3
+	assert(value == "kitties - 2", "Subscription should not have been re-evaluated")
+	assert(timesRan == 1, "Subscription should have only ran once, but ran " .. timesRan .. " times")
+	c2.value = 4
+	assert(value == "kitties - 4", "Subscription should have been re-evaluated")
+	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
+	switchCell.value = true
+	assert(value == "foxes - 3", "Subscription should have been re-evaluated")
+	assert(timesRan == 3, "Subscription should have only ran thrice, but ran " .. timesRan .. " times")
+	c2.value = 5
+	assert(value == "foxes - 3", "Subscription should not have been re-evaluated")
+	assert(timesRan == 3, "Subscription should have only ran thrice, but ran " .. timesRan .. " times")
+	unsub()
+	c1.value = 6
+	assert(value == "foxes - 3", "Subscription should not have been re-evaluated")
+	assert(timesRan == 3, "Subscription should have only ran thrice, but ran " .. timesRan .. " times")
+end)
+
 local red = "\27[31m"
 local green = "\27[32m"
 local bold = "\27[1m"
