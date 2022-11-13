@@ -382,17 +382,6 @@ test("Root cells should keep subscriptions alive", function()
 	assert(timesRan == 2, "Subscription should have only ran twice, but ran " .. timesRan .. " times")
 	c1 = nil
 	collectgarbage()
-	for i, v in t do
-		print(i, v)
-		for i, v in getmetatable(v)._data do
-			print("", i, v)
-			if typeof(v) == "table" then
-				for i, v in v do
-					print("", "", i, v)
-				end
-			end
-		end
-	end
 	assert(t[1] == nil, "First cell should have been garbage collected")
 end)
 
