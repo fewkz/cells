@@ -26,7 +26,7 @@ local function metaIndex(self, key)
 	if key == "value" then
 		local ourData = getmetatable(self)._data
 		local d = getfenv(0)[FENV_KEY]
-		if d and not d.seen[self] then
+		if d and d.seen and not d.seen[self] then
 			d.seen[self] = true
 			if d.roots then
 				d.roots[ourData] = true

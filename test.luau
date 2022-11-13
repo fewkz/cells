@@ -155,7 +155,7 @@ test("Updates can be batched", function()
 	end)
 	assert(f.value == 2, "Formula should have been evaluated")
 	batch(function()
-		c.value = 2
+		c.value += 1
 		c.value = 3
 		c.value = 4
 	end)
