@@ -54,7 +54,8 @@ points.value = 200
 print(pointsText.value) -- You have 200 points.
 ```
 
-Note: Right now, derived cells will be calculated as soon as they're created. This behavior will be changed in the future: [#3](https://github.com/fewkz/cells/issues/3)
+Note: Right now, derived cells will be calculated as soon as they're created, or a cell it derives from changes.
+This behavior will be changed in the future to only calculate derived cells that a subscription relies on: [#3](https://github.com/fewkz/cells/issues/3)
 
 ## Batching
 
