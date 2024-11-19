@@ -38,7 +38,7 @@ local function metaIndex(self, key)
 		end
 		return ourData.value
 	else
-		error(string.format('Cannot get key %q from a cell, only valid field is "value"', key), 2)
+		error(`Cannot get key "{key}" from a cell, only valid field is "value"`, 2)
 	end
 end
 
@@ -62,7 +62,7 @@ local function metaNewIndex(self, key, value)
 			error("Cannot set cell value from within a cell computation", 2)
 		end
 	else
-		error(string.format('Cannot set key %q in a cell, only valid field is "value"', key), 2)
+		error(`Cannot set key "{key}" in a cell, only valid field is "value"`, 2)
 	end
 end
 

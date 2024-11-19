@@ -34,7 +34,7 @@ local function metaIndex(self, key)
 		end
 		return ourData.value
 	else
-		error(string.format('Cannot get key %q from a cell, only valid field is "value"', key), 2)
+		error(`Cannot get key "{key}" from a cell, only valid field is "value"`, 2)
 	end
 end
 
