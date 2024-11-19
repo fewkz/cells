@@ -5,7 +5,7 @@ code. It is based off the idea of spreadsheets, where the value of a cell can be
 modified or derived from a formula that depends on other cells. The library is
 based off of https://github.com/preactjs/signals
 
-```lua
+```luau
 local foo = cell(2)
 print(foo.value) -- 2
 local fooSquared = formula(function()
@@ -22,7 +22,7 @@ A cell represents a piece of data that can change. It can store any data. When a
 cell changes, anything that depends on it will be recomputed. You can create a
 cell by using the `cell` function, and passing in an initial value.
 
-```lua
+```luau
 local stringCell = cell("Hello, World!")
 local numberCell = cell(1)
 local tableCell = cell({ text = "Cells can store anything!" })
@@ -44,7 +44,7 @@ Derived cells are read-only, attempting to set the value of a derived cell will
 cause a runtime error. Derived cells are garbage collected when there are no
 more references to them.
 
-```lua
+```luau
 local points = cell(100)
 local pointsText = formula(function()
     return `You have {points.value} points.`
@@ -59,7 +59,7 @@ print(pointsText.value) -- You have 200 points.
 You can use the `batch` function to update multiple cells at once, and only
 trigger updates at the end of the batch.
 
-```lua
+```luau
 local c1 = cell("foo")
 local c2 = cell("bar")
 local f = formula(function()
@@ -78,7 +78,7 @@ Derived cells are recomputed in topological order. This means all the cells that
 a cell depends on will be recomputed before the cell itself, minimizing
 unnecessary computations.
 
-```lua
+```luau
 local c = cell({"Hello,", "World!"})
 local firstWord = formula(function()
     return c.value[1]
@@ -102,7 +102,7 @@ returns an function that can be used to unsubscribe from all cells.
 Subscriptions will automatically be garbage collected when all the cells they
 depend on are garbage collected.
 
-```lua
+```luau
 local foo = cell(2)
 local fooSquared = formula(function()
     return foo.value * foo.value
@@ -126,7 +126,7 @@ Every time a subscription or formula is re-evaluated, it's dependencies are
 re-evaluated. This means the dependencies of a subscription or formula can
 change over time, eliminating redundant evaluations.
 
-```lua
+```luau
 local ignoreCounter = cell(false)
 local counter = cell(0)
 subscribe(function()
