@@ -54,6 +54,8 @@ points.value = 200
 print(pointsText.value) -- You have 200 points.
 ```
 
+Note: Right now, derived cells will be calculated as soon as they're created. This behavior will be changed in the future: [#3](https://github.com/fewkz/cells/issues/3)
+
 ## Batching
 
 You can use the `batch` function to update multiple cells at once, and only
@@ -71,6 +73,10 @@ batch(function()
     c2.value = "second"
 end)
 ```
+
+Note: Errors occuring in a batch can cause only a portion of cells in the batch to be changed.
+You should try to avoid errors from occuring in batches at all as this can lead to bad behavior.
+Batches will be made atomic in the future, which will rollback changes if an error occurs: https://github.com/fewkz/cells/issues/1
 
 ## Topological sorting
 
@@ -119,6 +125,8 @@ unsub()
 foo.value = 20
 -- Nothing is printed
 ```
+Note: Errors occuring in subscriptions will break cells. This will be fixed in the future.
+Avoid having anything that may cause errors in your subscriptions. https://github.com/fewkz/cells/issues/4
 
 ## Dynamic dependencies
 
