@@ -152,3 +152,7 @@ counter.value += 1          -- doesn't print anything
 ignoreCounter.value = false -- prints "Counter is 2"
 counter.value += 1          -- prints "Counter is 3"
 ```
+
+## Style Guide
+
+It's recommended to clarify a variable is a cell or derived cell by naming it like `cName` or `nameCell`.
