@@ -11,9 +11,9 @@ print(foo.value) -- 2
 local fooSquared = formula(function()
     return foo.value * foo.value
 end)
-print(fooSquared) -- 4
+print(fooSquared.value) -- 4
 foo.value = 10
-print(fooSquared) -- 100
+print(fooSquared.value) -- 100
 ```
 
 ## Cells
