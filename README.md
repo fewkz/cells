@@ -5,14 +5,20 @@ code. It is based off the idea of spreadsheets, where the value of a cell can be
 modified or derived from a formula that depends on other cells. The library is
 based off of https://github.com/preactjs/signals
 
+Cells uses a dependency graph to recalculate any derived cells once when a cell changes.
+You can subscribe to cells to trigger code that runs when cells the subscription depends on change.
+
 ```luau
 local foo = cell(2)
 print(foo.value) -- 2
 local fooSquared = formula(function()
     return foo.value * foo.value
 end)
+subscribe(function()
+    print(`foo squared is {fooSquared.value}`)
+end) -- prints foo squared is 4
 print(fooSquared.value) -- 4
-foo.value = 10
+foo.value = 10 -- prints foo squared is 100
 print(fooSquared.value) -- 100
 ```
 
